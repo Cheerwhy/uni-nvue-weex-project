@@ -1,10 +1,8 @@
 <template>
-	<div>
-		<slider ref="slider" class="slider" :infinite="false" :index="sliderIndex" @change="sliderChange">
-			<page v-for="(page,pageIndex) in pages" :baseUrl="baseUrl" :page="page" :index="pageIndex"
-				:key="'page'+pageIndex"></page>
-		</slider>
-	</div>
+	<slider ref="slider" class="slider" :infinite="false" :index="sliderIndex" @change="sliderChange">
+		<page v-for="(page,pageIndex) in pages" :baseUrl="baseUrl" :page="page" :index="pageIndex"
+			:key="'page'+pageIndex"></page>
+	</slider>
 </template>
 
 <script>

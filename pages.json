@@ -11,6 +11,15 @@
 			"style": {
 				"navigationBarTitleText": "my"
 			}
+		},
+		{
+			"path": "pages/details/details",
+			"style": {
+				"app-plus": {
+					"animationType": "fade-in",
+					"animationDuration": 200
+				}
+			}
 		}
 	],
 	"globalStyle": {

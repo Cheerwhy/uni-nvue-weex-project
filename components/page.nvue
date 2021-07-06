@@ -1,20 +1,20 @@
 <template>
-	<list class="list" :show-scrollbar="false" v-if="page.type === 'list'">
+	<list v-if="page.type === 'list'" :show-scrollbar="false">
 		<refresh class="refresh" @refresh="onRefresh" @pullingdown="onPullingDown"
 			:display="page.refreshing ? 'show' : 'hide'">
 			<loading-indicator class="indicator"></loading-indicator>
 		</refresh>
 		<cell :ref="page.pageName+'topCell'"></cell>
-		<cell v-for="(item,index) in page.data" :ref="'listIme' + index" :key="index">
+		<cell v-for="(item,index) in page.data" :ref="'listItem' + index" :key="index">
 			<div class="panel" @click="cellClick">
-				<image class="goods-img" resize="cover" :src="url(item.gImage)"></image>
+				<image class="goods-img" :src="url(item.gImage)"></image>
 			</div>
 		</cell>
 		<loading class="loading" @loading="onloading" :display="page.loading ? 'show' : 'hide'">
 			<loading-indicator class="indicator"></loading-indicator>
 		</loading>
 	</list>
-	<waterfall class="waterfall" v-else column-count="2" :show-scrollbar="false" column-gap="10">
+	<waterfall v-else column-count="2" :show-scrollbar="false" column-gap="10" left-gap="10" right-gap="10">
 		<refresh class="refresh" @refresh="onRefresh" @pullingdown="onPullingDown"
 			:display="page.refreshing ? 'show' : 'hide'">
 			<loading-indicator class="indicator"></loading-indicator>
@@ -25,6 +25,15 @@
 				<image class="goods-img2" :src="url(item.gImage)" :style="{height:getHeight(item.gImage)}"
 					:autoBitmapRecycle="false" @load="imgLoad">
 				</image>
+				<div class="goods-img2-content">
+					<text class="text">{{item.gName}}</text>
+				</div>
+				<div class="goods-owner">
+					<image class="goods-avatar" :src="baseUrl + item.avatar" @load="imgLoad" @click="avatarClick"
+						:uid="item.uid">
+					</image>
+					<text class="text2">{{item.userName}}</text>
+				</div>
 			</div>
 		</cell>
 		<cell @appear="loadMore"></cell>
@@ -37,6 +46,7 @@
 	} from "../api/index.js"
 	const dom = weex.requireModule('dom');
 	const animation = weex.requireModule('animation');
+	const modal = weex.requireModule('modal');
 	export default {
 		props: {
 			// 当前页面对象
@@ -50,14 +60,14 @@
 			console.log(`${this.page.pageName} mounted`);
 			uni.$on("tabItemTap", (val) => {
 				if (val === this.index) {
-					console.log(`This page is ${this.page.pageName},now can scrollToTop`)
+					console.log(`现在是${this.page.pageName}页面,触发滚动至顶部`)
 					const el = this.$refs[this.page.pageName + "topCell"];
 					dom.scrollToElement(el, {})
 				}
 			});
 			uni.$on("sliderChange", (val) => {
 				if (val === this.index) {
-					console.log(`Now slide to ${this.page.pageName},prams:${val}`)
+					console.log(`切换至 ${this.page.pageName}页面,数据:${val}`)
 				}
 			});
 			this.getGoods();
@@ -68,29 +78,19 @@
 			uni.$off("sliderChange");
 		},
 		methods: {
+			// 图像加载事件,给予透明度渐变的效果
 			imgLoad(e) {
 				animation.transition(e.target, {
 					styles: {
 						opacity: 1
 					},
 					duration: 200,
-					timingFunction: 'ease-in',
+					timingFunction: 'linear',
 					needLayout: false,
 					delay: 0
 				})
 			},
-			imgAppear(e) {
-				animation.transition(e.target, {
-					styles: {
-						opacity: 1
-					},
-					duration: 200,
-					timingFunction: 'ease-in',
-					needLayout: false,
-					delay: 0
-				})
-
-			},
+			// 加载更多
 			loadMore() {
 				this.getGoods();
 			},
@@ -109,6 +109,11 @@
 				uni.navigateTo({
 					url: "/pages/details/details",
 				})
+			},
+			// 头像点击事件
+			avatarClick(e) {
+				let uid = e.target.attr.uid;
+				console.log(`您点击了用户头像，此用户的uid为${uid}`)
 			},
 			// 解析图片url
 			url(urls) {
@@ -155,8 +160,8 @@
 		color: blue;
 	}
 
+
 	.refresh {
-		width: 750rpx;
 		align-items: center;
 		background: #f5f5f5;
 	}
@@ -167,18 +172,10 @@
 		background: #fff;
 	}
 
-	.list {
-		flex: 1;
-	}
-
-	.waterfall {
-		flex: 1;
-	}
-
 	.goods-img {
 		width: 300rpx;
 		border-radius: 9rpx;
-		box-shadow: 0 1rpx 3rpx rgba(0, 0, 0, 0.2);
+		border: 1px solid #f5f5f5;
 	}
 
 	.panel {
@@ -195,13 +192,43 @@
 
 	.goods-img2 {
 		opacity: 0;
-		border-radius: 9rpx;
 		box-shadow: 0 1rpx 3rpx rgba(0, 0, 0, 0.2);
+		border-radius: 9rpx 9rpx 0 0;
+	}
+
+	.goods-img2-content {
+		padding: 20rpx;
+	}
+
+	.goods-owner {
+		padding: 20rpx;
+		flex-direction: row;
+		align-items: center;
+		justify-content: flex-start;
+	}
+
+	.goods-avatar {
+		width: 32rpx;
+		height: 32rpx;
+		border-radius: 16rpx;
+	}
+
+	.text {
+		font-size: 32rpx;
+		line-height: 32rpx;
+		text-overflow: clip;
+		lines: 2;
+	}
+
+	.text2 {
+		margin-left: 10rpx;
 	}
 
 	.cell-content {
+		overflow: hidden;
 		background: #fff;
 		margin-bottom: 10rpx;
+		border-radius: 9rpx;
 		box-shadow: 0 8rpx 8rpx rgba(0, 0, 0, 0.2);
 	}
 </style>
