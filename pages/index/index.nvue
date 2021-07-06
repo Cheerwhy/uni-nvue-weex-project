@@ -1,0 +1,62 @@
+<template>
+	<div>
+		<slider ref="slider" class="slider" :infinite="false" :index="sliderIndex" @change="sliderChange">
+			<page v-for="(page,pageIndex) in pages" :baseUrl="baseUrl" :page="page" :index="pageIndex"
+				:key="'page'+pageIndex"></page>
+		</slider>
+	</div>
+</template>
+
+<script>
+	import page from "../../components/page.nvue"
+	export default {
+		data() {
+			return {
+				// slider索引值
+				sliderIndex: 0,
+				// 页面数据
+				pages: [{
+						type: "list",
+						pageName: "list",
+						currentPage: 0,
+						refreshing: false,
+						loading: false,
+						data: [],
+					},
+					{
+						type: "waterfall",
+						pageName: "waterfall",
+						column_count: 2,
+						column_gap: 10,
+						currentPage: 0,
+						refreshing: false,
+						loading: false,
+						data: [],
+					}
+				],
+				// 图片地址前缀
+				baseUrl: 'http://1.116.220.26:8000/static/',
+			}
+		},
+		components: {
+			page,
+		},
+		onTabItemTap(e) {
+			// tabBar点击事件
+			uni.$emit("tabItemTap", this.sliderIndex);
+		},
+		methods: {
+			// slider切换事件
+			sliderChange(e) {
+				this.sliderIndex = e.index;
+				uni.$emit("sliderChange", this.sliderIndex);
+			},
+		}
+	}
+</script>
+
+<style>
+	.slider {
+		flex: 1;
+	}
+</style>

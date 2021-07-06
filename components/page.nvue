@@ -1,0 +1,207 @@
+<template>
+	<list class="list" :show-scrollbar="false" v-if="page.type === 'list'">
+		<refresh class="refresh" @refresh="onRefresh" @pullingdown="onPullingDown"
+			:display="page.refreshing ? 'show' : 'hide'">
+			<loading-indicator class="indicator"></loading-indicator>
+		</refresh>
+		<cell :ref="page.pageName+'topCell'"></cell>
+		<cell v-for="(item,index) in page.data" :ref="'listIme' + index" :key="index">
+			<div class="panel" @click="cellClick">
+				<image class="goods-img" resize="cover" :src="url(item.gImage)"></image>
+			</div>
+		</cell>
+		<loading class="loading" @loading="onloading" :display="page.loading ? 'show' : 'hide'">
+			<loading-indicator class="indicator"></loading-indicator>
+		</loading>
+	</list>
+	<waterfall class="waterfall" v-else column-count="2" :show-scrollbar="false" column-gap="10">
+		<refresh class="refresh" @refresh="onRefresh" @pullingdown="onPullingDown"
+			:display="page.refreshing ? 'show' : 'hide'">
+			<loading-indicator class="indicator"></loading-indicator>
+		</refresh>
+		<cell :ref="page.pageName+'topCell'"></cell>
+		<cell v-for="(item,index) in page.data" :ref="'waterfallItem' + index" :key="index">
+			<div class="cell-content" @click="cellClick">
+				<image class="goods-img2" :src="url(item.gImage)" :style="{height:getHeight(item.gImage)}"
+					:autoBitmapRecycle="false" @load="imgLoad">
+				</image>
+			</div>
+		</cell>
+		<cell @appear="loadMore"></cell>
+	</waterfall>
+</template>
+
+<script>
+	import {
+		getGoods
+	} from "../api/index.js"
+	const dom = weex.requireModule('dom');
+	const animation = weex.requireModule('animation');
+	export default {
+		props: {
+			// 当前页面对象
+			page: Object,
+			// 当前页面索引值
+			index: Number,
+			// 图片前缀
+			baseUrl: String,
+		},
+		mounted() {
+			console.log(`${this.page.pageName} mounted`);
+			uni.$on("tabItemTap", (val) => {
+				if (val === this.index) {
+					console.log(`This page is ${this.page.pageName},now can scrollToTop`)
+					const el = this.$refs[this.page.pageName + "topCell"];
+					dom.scrollToElement(el, {})
+				}
+			});
+			uni.$on("sliderChange", (val) => {
+				if (val === this.index) {
+					console.log(`Now slide to ${this.page.pageName},prams:${val}`)
+				}
+			});
+			this.getGoods();
+		},
+		beforeDestroy() {
+			// 在这里取消监听，避免重复监听
+			uni.$off("tabItemTap");
+			uni.$off("sliderChange");
+		},
+		methods: {
+			imgLoad(e) {
+				animation.transition(e.target, {
+					styles: {
+						opacity: 1
+					},
+					duration: 200,
+					timingFunction: 'ease-in',
+					needLayout: false,
+					delay: 0
+				})
+			},
+			imgAppear(e) {
+				animation.transition(e.target, {
+					styles: {
+						opacity: 1
+					},
+					duration: 200,
+					timingFunction: 'ease-in',
+					needLayout: false,
+					delay: 0
+				})
+
+			},
+			loadMore() {
+				this.getGoods();
+			},
+			onPullingDown(e) {},
+			// 计算图片高度
+			getHeight(urls) {
+				// 解析JSON数据
+				let url = JSON.parse(urls);
+				// 图片宽度固定，利用图片的宽高比计算图片高度
+				let width = (750 - this.page.column_gap) / 2;
+				let height = width * url.scale + 'px';
+				return height;
+			},
+			// 列表元素、瀑布流元素点击事件
+			cellClick() {
+				uni.navigateTo({
+					url: "/pages/details/details",
+				})
+			},
+			// 解析图片url
+			url(urls) {
+				let url = JSON.parse(urls);
+				return this.baseUrl + url.url;
+			},
+			// 下拉刷新事件
+			onRefresh() {
+				this.page.refreshing = true;
+				this.getGoods().then(() => {
+					this.page.refreshing = false;
+				})
+			},
+			// 上拉加载事件
+			onloading() {
+				this.page.loading = true;
+				this.getGoods().then(() => {
+					this.page.loading = false;
+				});
+			},
+			// 获取数据
+			async getGoods() {
+				let res = await getGoods({
+					page: this.page.currentPage++
+				})
+				this.page.data = [...this.page.data, ...res.data.data];
+				// this.$nextTick(() => {
+				// 	if (this.page.currentPage > 1) {
+				// 		let data = `goods${this.goodsList.data.length - 20}`;
+				// 		const el = this.$refs[data][0];
+				// 		dom.scrollToElement(el, {})
+				// 	}
+				// })
+			}
+		}
+	}
+</script>
+
+<style>
+	.indicator {
+		margin: 20rpx 0;
+		height: 60rpx;
+		width: 60rpx;
+		color: blue;
+	}
+
+	.refresh {
+		width: 750rpx;
+		align-items: center;
+		background: #f5f5f5;
+	}
+
+	.loading {
+		width: 750rpx;
+		align-items: center;
+		background: #fff;
+	}
+
+	.list {
+		flex: 1;
+	}
+
+	.waterfall {
+		flex: 1;
+	}
+
+	.goods-img {
+		width: 300rpx;
+		border-radius: 9rpx;
+		box-shadow: 0 1rpx 3rpx rgba(0, 0, 0, 0.2);
+	}
+
+	.panel {
+		margin-bottom: 40rpx;
+		background: #fff;
+		box-shadow: 0 8rpx 8rpx rgba(0, 0, 0, 0.2);
+		padding: 20rpx;
+		transition: background-color .1s linear
+	}
+
+	.panel:active {
+		background: #F0F0F0;
+	}
+
+	.goods-img2 {
+		opacity: 0;
+		border-radius: 9rpx;
+		box-shadow: 0 1rpx 3rpx rgba(0, 0, 0, 0.2);
+	}
+
+	.cell-content {
+		background: #fff;
+		margin-bottom: 10rpx;
+		box-shadow: 0 8rpx 8rpx rgba(0, 0, 0, 0.2);
+	}
+</style>
