@@ -17,7 +17,6 @@ axios.defaults.adapter = function(config) {
 			responseType: config.responseType,
 			sslVerify: false,
 			complete: function complete(response) {
-				// console.log("执行完成：", response)
 				response = {
 					data: response.data,
 					status: response.statusCode,
@@ -34,7 +33,7 @@ axios.defaults.adapter = function(config) {
 service.interceptors.request.use(
 	(config) => {
 		// 每次请求带上token
-		// config.headers.Authorization = Cookies.get("token") || "";
+		//config.headers.Authorization = Cookies.get("token") || "";
 		//config.headers.Authorization = sessionStorage.getItem("token") || "";
 		config.timeout = 5000;
 		return config;

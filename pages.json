@@ -3,8 +3,12 @@
 		{
 			"path": "pages/index/index",
 			"style": {
-				"navigationBarTitleText": "index"
+				"navigationBarTitleText": "index",
+				"app-plus": {
+					"titleNView": false
+				}
 			}
+
 		},
 		{
 			"path": "pages/my/my",

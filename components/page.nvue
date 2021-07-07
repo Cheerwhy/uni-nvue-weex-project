@@ -6,8 +6,8 @@
 		</refresh>
 		<cell :ref="page.pageName+'topCell'"></cell>
 		<cell v-for="(item,index) in page.data" :ref="'listItem' + index" :key="index">
-			<div class="panel" @click="cellClick">
-				<image class="goods-img" :src="url(item.gImage)"></image>
+			<div class="list-cell" @click="cellClick" elevation="3px">
+				<image class="list-img" :src="url(item.gImage)" :autoBitmapRecycle="false"></image>
 			</div>
 		</cell>
 		<loading class="loading" @loading="onloading" :display="page.loading ? 'show' : 'hide'">
@@ -21,22 +21,22 @@
 		</refresh>
 		<cell :ref="page.pageName+'topCell'"></cell>
 		<cell v-for="(item,index) in page.data" :ref="'waterfallItem' + index" :key="index">
-			<div class="cell-content" @click="cellClick">
-				<image class="goods-img2" :src="url(item.gImage)" :style="{height:getHeight(item.gImage)}"
-					:autoBitmapRecycle="false" @load="imgLoad">
+			<div class="waterfall-cell" @click="cellClick" elevation="5px">
+				<image class="waterfall-img" :src="url(item.gImage)" :style="{height:getHeight(item.gImage)}"
+					:autoBitmapRecycle="false" @load="imgLoad" @appear="imgAppear">
 				</image>
-				<div class="goods-img2-content">
+				<div class="waterfall-cell-content">
 					<text class="text">{{item.gName}}</text>
 				</div>
-				<div class="goods-owner">
-					<image class="goods-avatar" :src="baseUrl + item.avatar" @load="imgLoad" @click="avatarClick"
-						:uid="item.uid">
+				<div class="owner">
+					<image class="avatar" :src="baseUrl + item.avatar" @load="imgLoad" @click="avatarClick"
+						:uid="item.uid" :autoBitmapRecycle="false">
 					</image>
-					<text class="text2">{{item.userName}}</text>
+					<text class="text-name">{{item.userName}}</text>
 				</div>
 			</div>
 		</cell>
-		<cell @appear="loadMore"></cell>
+		<cell @appear="loadMore" v-if="page.data.length > 0"></cell>
 	</waterfall>
 </template>
 
@@ -46,7 +46,6 @@
 	} from "../api/index.js"
 	const dom = weex.requireModule('dom');
 	const animation = weex.requireModule('animation');
-	const modal = weex.requireModule('modal');
 	export default {
 		props: {
 			// 当前页面对象
@@ -57,20 +56,41 @@
 			baseUrl: String,
 		},
 		mounted() {
-			console.log(`${this.page.pageName} mounted`);
+			// 监听滚动至顶部信号
 			uni.$on("tabItemTap", (val) => {
 				if (val === this.index) {
 					console.log(`现在是${this.page.pageName}页面,触发滚动至顶部`)
 					const el = this.$refs[this.page.pageName + "topCell"];
-					dom.scrollToElement(el, {})
+					// 先触发向上滚动的动画
+					dom.scrollToElement(el, {
+						offset: 0,
+						animated: true
+					})
+					// 直接向上滚动至顶点，无动画
+					dom.scrollToElement(el, {
+						offset: 0,
+						animated: false
+					})
 				}
 			});
+			// 监听sliderChange信号
 			uni.$on("sliderChange", (val) => {
 				if (val === this.index) {
-					console.log(`切换至 ${this.page.pageName}页面,数据:${val}`)
+					console.log(`切换至 ${this.page.pageName}页面`);
+				}
+				// 判断是否已经加载
+				if (!this.page.firstRender) {
+					console.log(`${this.page.pageName}页面的首次数据加载`);
+					this.getGoods().then(() => {
+						this.page.firstRender = true;
+					})
 				}
 			});
-			this.getGoods();
+			// 是否为首页
+			if (this.index === 0) {
+				this.page.firstRender = true;
+				this.getGoods();
+			}
 		},
 		beforeDestroy() {
 			// 在这里取消监听，避免重复监听
@@ -112,6 +132,8 @@
 			},
 			// 头像点击事件
 			avatarClick(e) {
+				// 阻止事件冒泡
+				e.stopPropagation();
 				let uid = e.target.attr.uid;
 				console.log(`您点击了用户头像，此用户的uid为${uid}`)
 			},
@@ -140,13 +162,6 @@
 					page: this.page.currentPage++
 				})
 				this.page.data = [...this.page.data, ...res.data.data];
-				// this.$nextTick(() => {
-				// 	if (this.page.currentPage > 1) {
-				// 		let data = `goods${this.goodsList.data.length - 20}`;
-				// 		const el = this.$refs[data][0];
-				// 		dom.scrollToElement(el, {})
-				// 	}
-				// })
 			}
 		}
 	}
@@ -154,9 +169,9 @@
 
 <style>
 	.indicator {
-		margin: 20rpx 0;
-		height: 60rpx;
-		width: 60rpx;
+		margin: 20px 0;
+		height: 60px;
+		width: 60px;
 		color: blue;
 	}
 
@@ -167,68 +182,66 @@
 	}
 
 	.loading {
-		width: 750rpx;
+		width: 750px;
 		align-items: center;
 		background: #fff;
 	}
 
-	.goods-img {
-		width: 300rpx;
-		border-radius: 9rpx;
+	.list-img {
+		width: 300px;
+		border-radius: 9px;
 		border: 1px solid #f5f5f5;
 	}
 
-	.panel {
-		margin-bottom: 40rpx;
+	.list-cell {
+		margin-bottom: 40px;
 		background: #fff;
-		box-shadow: 0 8rpx 8rpx rgba(0, 0, 0, 0.2);
-		padding: 20rpx;
+		padding: 20px;
 		transition: background-color .1s linear
 	}
 
-	.panel:active {
+	.list-cell:active {
 		background: #F0F0F0;
 	}
 
-	.goods-img2 {
+	.waterfall-img {
 		opacity: 0;
-		box-shadow: 0 1rpx 3rpx rgba(0, 0, 0, 0.2);
-		border-radius: 9rpx 9rpx 0 0;
+		border-radius: 9px 9px 0 0;
 	}
 
-	.goods-img2-content {
-		padding: 20rpx;
+	.waterfall-cell-content {
+		padding: 20px;
 	}
 
-	.goods-owner {
-		padding: 20rpx;
+	.owner {
+		padding: 20px;
 		flex-direction: row;
 		align-items: center;
 		justify-content: flex-start;
 	}
 
-	.goods-avatar {
-		width: 32rpx;
-		height: 32rpx;
-		border-radius: 16rpx;
+	.avatar {
+		width: 32px;
+		height: 32px;
+		border-radius: 16px;
 	}
 
 	.text {
-		font-size: 32rpx;
-		line-height: 32rpx;
+		font-size: 32px;
+		line-height: 32px;
 		text-overflow: clip;
 		lines: 2;
 	}
 
-	.text2 {
-		margin-left: 10rpx;
+	.text-name {
+		margin-left: 10px;
 	}
 
-	.cell-content {
-		overflow: hidden;
-		background: #fff;
-		margin-bottom: 10rpx;
-		border-radius: 9rpx;
-		box-shadow: 0 8rpx 8rpx rgba(0, 0, 0, 0.2);
+
+	.waterfall-cell {
+		background-color: #fff;
+		margin-top: 10px;
+		margin-bottom: 10px;
+		border-radius: 9px;
 	}
 </style>

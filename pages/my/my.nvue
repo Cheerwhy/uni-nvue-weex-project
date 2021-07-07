@@ -3,14 +3,27 @@
 </template>
 
 <script>
+	import {
+		mapState,
+		mapMutations
+	} from 'vuex'
 	export default {
 		data() {
 			return {
 
 			}
 		},
+		computed: {
+			...mapState([
+				'beforeIndex',
+				'currentIndex'
+			])
+		},
+		onTabItemTap(e) {
+			this.changeIndex(e.index);
+		},
 		methods: {
-
+			...mapMutations(['changeIndex', 'setCurrentIndex']),
 		}
 	}
 </script>

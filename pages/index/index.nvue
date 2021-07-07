@@ -1,12 +1,25 @@
 <template>
-	<slider ref="slider" class="slider" :infinite="false" :index="sliderIndex" @change="sliderChange">
-		<page v-for="(page,pageIndex) in pages" :baseUrl="baseUrl" :page="page" :index="pageIndex"
-			:key="'page'+pageIndex"></page>
-	</slider>
+	<div class="wrap">
+		<div :style="{ height: iStatusBarHeight + 'px'}"></div>
+		<div class="tabs">
+			<div class="search"></div>
+			<text v-for="(item,index) in pages" class="text" :class="sliderIndex === index?'text-main':'text-normal'"
+				:key="'tab'+Index" :data-index="index" @click="tabClick">{{item.pageName}}</text>
+			<image class="search" src="../../static/search.png"></image>
+		</div>
+		<slider ref="slider" class="slider" :infinite="false" :index="sliderIndex" @change="sliderChange">
+			<page v-for="(page,pageIndex) in pages" :baseUrl="baseUrl" :page="page" :index="pageIndex"
+				:key="'page'+pageIndex"></page>
+		</slider>
+	</div>
 </template>
 
 <script>
 	import page from "../../components/page.nvue"
+	import {
+		mapState,
+		mapMutations
+	} from 'vuex'
 	export default {
 		data() {
 			return {
@@ -16,6 +29,7 @@
 				pages: [{
 						type: "list",
 						pageName: "list",
+						firstRender: false,
 						currentPage: 0,
 						refreshing: false,
 						loading: false,
@@ -24,6 +38,7 @@
 					{
 						type: "waterfall",
 						pageName: "waterfall",
+						firstRender: false,
 						column_count: 2,
 						column_gap: 10,
 						currentPage: 0,
@@ -34,16 +49,43 @@
 				],
 				// 图片地址前缀
 				baseUrl: 'http://1.116.220.26:8000/static/',
+				// 系统状态栏高度
+				iStatusBarHeight: 0,
 			}
 		},
 		components: {
 			page,
 		},
+		computed: {
+			...mapState([
+				'beforeIndex',
+				'currentIndex'
+			])
+		},
+		created() {
+			// 获取手机系统信息
+			let info = uni.getSystemInfoSync();
+			// 计算手机顶部状态栏的高度
+			this.iStatusBarHeight = info.screenHeight - info.windowHeight;
+			this.setCurrentIndex(0);
+		},
 		onTabItemTap(e) {
-			// tabBar点击事件
-			uni.$emit("tabItemTap", this.sliderIndex);
+			this.changeIndex(e.index);
+			// 如果是在当前页面下点击了tabItem
+			if (this.beforeIndex === this.currentIndex) {
+				// 发送滚动至顶部信号
+				uni.$emit("tabItemTap", this.sliderIndex);
+			}
+
 		},
 		methods: {
+			...mapMutations(['changeIndex', 'setCurrentIndex']),
+			tabClick(e) {
+				let target = e.target;
+				if (this.sliderIndex !== target.attr.dataIndex) {
+					this.sliderIndex = target.attr.dataIndex;
+				}
+			},
 			// slider切换事件
 			sliderChange(e) {
 				this.sliderIndex = e.index;
@@ -56,5 +98,35 @@
 <style>
 	.slider {
 		flex: 1;
+	}
+
+	.wrap {
+		flex: 1;
+	}
+
+	.tabs {
+		flex-direction: row;
+		justify-content: space-between;
+		align-items: center;
+		height: 55px;
+		padding: 40px;
+		background-color: #fff;
+	}
+
+	.text {
+		font-size: 32px;
+	}
+
+	.text-normal {
+		color: #9D9D9D;
+	}
+
+	.text-main {
+		color: #333333;
+	}
+
+	.search {
+		width: 48px;
+		height: 48px;
 	}
 </style>
