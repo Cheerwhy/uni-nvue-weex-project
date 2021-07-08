@@ -46,9 +46,13 @@
             /* SDK配置 */
             "sdkConfigs" : {
                 "ad" : {}
+            },
+            "splashscreen" : {
+                "androidStyle" : "common"
             }
         },
         "nvueCompiler" : "weex",
+        "nvueLaunchMode" : "",
         "renderer" : "native"
     },
     /* 快应用特有相关 */

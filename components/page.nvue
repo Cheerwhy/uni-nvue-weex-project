@@ -5,25 +5,26 @@
 			<loading-indicator class="indicator"></loading-indicator>
 		</refresh>
 		<cell :ref="page.pageName+'topCell'"></cell>
-		<cell v-for="(item,index) in page.data" :ref="'listItem' + index" :key="index">
+		<cell v-for="(item,index) in page.data" :ref="'listItem' + index" :key="'listItem' + index">
 			<div class="list-cell" @click="cellClick" elevation="3px">
-				<image class="list-img" :src="url(item.gImage)" :autoBitmapRecycle="false"></image>
+				<image class="list-img" :src="url(item.gImage)" :autoBitmapRecycle="false" @load="imgLoad"></image>
 			</div>
 		</cell>
 		<loading class="loading" @loading="onloading" :display="page.loading ? 'show' : 'hide'">
 			<loading-indicator class="indicator"></loading-indicator>
 		</loading>
 	</list>
-	<waterfall v-else column-count="2" :show-scrollbar="false" column-gap="10" left-gap="10" right-gap="10">
+	<waterfall v-else :column-count="page.column_count" column-width="auto" :show-scrollbar="false"
+		:column-gap="page.column_gap" :left-gap="page.side_gap" :right-gap="page.side_gap">
 		<refresh class="refresh" @refresh="onRefresh" @pullingdown="onPullingDown"
 			:display="page.refreshing ? 'show' : 'hide'">
 			<loading-indicator class="indicator"></loading-indicator>
 		</refresh>
 		<cell :ref="page.pageName+'topCell'"></cell>
-		<cell v-for="(item,index) in page.data" :ref="'waterfallItem' + index" :key="index">
+		<cell v-for="(item,index) in page.data" :ref="'waterfallItem' + index" :key="'waterfallItem' + index">
 			<div class="waterfall-cell" @click="cellClick" elevation="5px">
 				<image class="waterfall-img" :src="url(item.gImage)" :style="{height:getHeight(item.gImage)}"
-					:autoBitmapRecycle="false" @load="imgLoad" @appear="imgAppear">
+					:autoBitmapRecycle="false" @load="imgLoad">
 				</image>
 				<div class="waterfall-cell-content">
 					<text class="text">{{item.gName}}</text>
@@ -120,7 +121,7 @@
 				// 解析JSON数据
 				let url = JSON.parse(urls);
 				// 图片宽度固定，利用图片的宽高比计算图片高度
-				let width = (750 - this.page.column_gap) / 2;
+				let width = (750 - 30) / 2;
 				let height = width * url.scale + 'px';
 				return height;
 			},
@@ -143,15 +144,20 @@
 				return this.baseUrl + url.url;
 			},
 			// 下拉刷新事件
-			onRefresh() {
+			async onRefresh() {
 				this.page.refreshing = true;
-				this.getGoods().then(() => {
-					this.page.refreshing = false;
-				})
+				// 模拟新数据
+				let data = this.page.data.slice(10, this.page.data.length);
+				this.page.data = [];
+				await this.$nextTick();
+				this.page.data = [...data, ...this.page.data];
+				await this.$nextTick();
+				this.page.refreshing = false;
 			},
 			// 上拉加载事件
 			onloading() {
 				this.page.loading = true;
+
 				this.getGoods().then(() => {
 					this.page.loading = false;
 				});
@@ -169,7 +175,6 @@
 
 <style>
 	.indicator {
-		margin: 20px 0;
 		height: 60px;
 		width: 60px;
 		color: blue;
@@ -177,6 +182,7 @@
 
 
 	.refresh {
+		padding: 20px 0;
 		align-items: center;
 		background: #f5f5f5;
 	}
@@ -189,6 +195,7 @@
 
 	.list-img {
 		width: 300px;
+		opacity: 0;
 		border-radius: 9px;
 		border: 1px solid #f5f5f5;
 	}

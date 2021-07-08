@@ -41,6 +41,7 @@
 						firstRender: false,
 						column_count: 2,
 						column_gap: 10,
+						side_gap: 10,
 						currentPage: 0,
 						refreshing: false,
 						loading: false,
