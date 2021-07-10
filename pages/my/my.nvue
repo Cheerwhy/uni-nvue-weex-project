@@ -1,5 +1,6 @@
 <template>
 	<div><text>我的</text></div>
+	<div class="chooseImg" @click="chooseImg()"></div>
 </template>
 
 <script>
@@ -10,7 +11,8 @@
 	export default {
 		data() {
 			return {
-
+				fil: [0, 2, 1],
+				previewImg: '',
 			}
 		},
 		computed: {
@@ -24,10 +26,30 @@
 		},
 		methods: {
 			...mapMutations(['changeIndex', 'setCurrentIndex']),
+
+			chooseImg() {
+				uni.chooseImage({
+					count: 1,
+					sizeType: ['original'],
+					sourceType: ['album'],
+					success(e) {
+						uni.previewImage({
+							urls: e.tempFilePaths,
+						})
+					}
+				})
+			},
 		}
 	}
 </script>
 
 <style>
+	.chooseImg {
+		height: 80px;
+		background: red;
+	}
 
+	.previewImg {
+		width: 750px;
+	}
 </style>
